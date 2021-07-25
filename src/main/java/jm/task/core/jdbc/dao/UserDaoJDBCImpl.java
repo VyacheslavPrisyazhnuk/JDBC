@@ -21,7 +21,7 @@ public class UserDaoJDBCImpl implements UserDao {
         try {
             connection = util.getConnection();
             statement = connection.createStatement();
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS mytable (Id INT PRIMARY KEY AUTO_INCREMENT, Name VARCHAR(20), lastName VARCHAR(20), age TINYINT)");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS mytable (Id BIGINT PRIMARY KEY AUTO_INCREMENT, Name VARCHAR(20), lastName VARCHAR(20), age TINYINT)");
             connection.commit();
         } catch (SQLException throwables) {
             try {
@@ -98,7 +98,8 @@ public class UserDaoJDBCImpl implements UserDao {
         PreparedStatement prStatement = null;
         try {
             connection = util.getConnection();
-            prStatement = connection.prepareStatement("delete from mytable where id = "+id+"");
+            prStatement = connection.prepareStatement("delete from mytable where id = ?");
+            prStatement.setLong(1, id);
             prStatement.executeUpdate();
             connection.commit();
         } catch (SQLException throwables) {
@@ -119,23 +120,18 @@ public class UserDaoJDBCImpl implements UserDao {
         }
     }
     public List<User> getAllUsers() {
-        String query = "SELECT * FROM mytable";
         List<User> userList = new ArrayList<>();
-        ResultSet tables;
         Connection connection = null;
         Statement statement = null;
         try {
             connection = util.getConnection();
             statement = connection.createStatement();
-            tables = connection.getMetaData().getTables(null, null, "mytable", null);
-            if (tables.next()) {
-                ResultSet resultSet = statement.executeQuery(query);
-                while (resultSet.next()) {
-                    User user = new User(resultSet.getString("name"), resultSet.getString("lastName"), resultSet.getByte("age"));
+            ResultSet result = statement.executeQuery("select id, name, lastName, age from mytable");
+                while (result.next()) {
+                    User user = new User(result.getLong("id"), result.getString("name"), result.getString("lastName"), result.getByte("age"));
                     userList.add(user);
                 }
                 System.out.println(userList);
-            }
             connection.commit();
         } catch (SQLException throwables) {
             try {
